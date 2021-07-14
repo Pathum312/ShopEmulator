@@ -1,4 +1,3 @@
 # ShopEmulator
 
-*Routes:
-  */getPenis
+Routes:*/getPenis
