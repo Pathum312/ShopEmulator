@@ -1,3 +1,4 @@
 # ShopEmulator
 
-`code()`
+*Routes:
+  */getPenis
