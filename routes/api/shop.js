@@ -80,7 +80,7 @@ router.post('/addItem', (req, res) => {
                 console.log(result);
                 res.json(newItem);
             });
-        };
+        }
 
         var same = false;
         result.every(item => {
