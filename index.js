@@ -6,8 +6,10 @@ const app = express();
 // Body parser
 app.use(express.json());
 
-// Api shop route
-app.use('/api/shop', require('./routes/api/shop'));
+// Api routes
+app.use('/api/customers', require('./routes/api/customers'));
+app.use('/api/items', require('./routes/api/items'));
+app.use('/api/owners', require('./routes/api/owners'));
 
 // Init port
 const PORT = process.env.PORT || 4000;
