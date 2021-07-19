@@ -4,7 +4,7 @@
 
 ### /api/customers ###
 
-1. `/createItemTable`: Creates the Item table in the Shop database.
+1. `GET``/createItemTable`: Creates the Item table in the Shop database.
 2. `/createShopOwnerTable`: Created the shop_owner table in the Shop database.
 3. `/addOwner`: Adds a owners data to the Shop_Owner table.
 4. `/addItem`: Adds an item to the Item table, also checks if this item is already added to the Item table.
