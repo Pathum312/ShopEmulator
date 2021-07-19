@@ -3,128 +3,170 @@ const router = express.Router();
 const async = require('async');
 const db = require('../../database/shopDB');
 const Customer = require('../../models/Customer');
-const Order = require('../../models/Order');
 
 // Gets all customers
 router.get('/', (req, res) => {
-    db.startConnection(db.ShopDB, db.emptyDatabase);
+    db.pool.getConnection((err, connection) => {
 
-    let sql = 'SELECT * FROM customer'
-    db.ShopDB.query(sql, (err, result) => {
-        if(err) throw err;
-        res.json(result);
+        if(err) {
+            console.log(err.message);
+        }
+
+        let sql = 'SELECT * FROM customer'
+        connection.query(sql, (err, result) => {
+            if(err) throw err;
+            res.json(result);
+            connection.release();
+        });
+
     });
-
-    db.ShopDB.end();
 });
 
 // Adds a customer
 router.post('/', (req, res) => {
-    db.startConnection(db.ShopDB, db.emptyDatabase);
+    db.pool.getConnection((err, connection) => {
 
-    let customer = new Customer(req.body.customerId, req.body.customerName, req.body.customerEmail);
+        if(err) {
+            console.log(err.message);
+        }
 
-    let sql = 'INSERT INTO customer SET ?';
-    db.ShopDB.query(sql, customer, (err, result) => {
-        if(err) throw err;
-        console.log(result);
-        res.json({msg: `Customer ${customer.getId} added to customer table`});
+        let customer = new Customer(req.body.customerId, req.body.customerName, req.body.customerEmail);
+
+        let sql = 'INSERT INTO customer SET ?';
+        connection.query(sql, customer, (err, result) => {
+            if(err) {
+                console.log(err.message);
+                res.status(400).json({Error: `Customer ${customer.getId} already exists !!!`});
+            };
+            console.log(result);
+            res.json({Success: `Customer ${customer.getId} added to customer table`});
+            connection.release();
+        });
+
     });
-
-    db.ShopDB.end();
 });
 
 // Update a customer's details
 router.put('/', (req, res) => {
-    db.startConnection(db.ShopDB, db.emptyDatabase);
+    db.pool.getConnection((err, connection) => {
+        console.log(req.body);
+        if(err) {
+            console.log(err.message);
+        }
 
-    let customer = new Customer(req.body.customerId, req.body.customerName, req.body.customerEmail);
-    let sql = `UPDATE customer SET customerName = '${customer.getName}', customerEmail = '${customer.getEmail}' WHERE customerId = ${customer.getId}`;
-    db.ShopDB.query(sql, (err, result) => {
-        if(err) throw err;
-        console.log(result);
-        res.json({msg: `Customer ${customer.getId} was updated`});
+        let sql = "UPDATE customer SET " + Object.keys(req.body).map(key => `${key} = ?`).join(", ") +" WHERE customerId = ?";
+        let parameters = [...Object.values(req.body), req.body.customerId];
+        connection.query(sql, parameters, (err, result) => {
+            if(err) {
+                res.status(400).json({Error: `Customer ${req.body.customerId} does not exist !!!`});
+            }
+            console.log(result);
+            res.json({Success: `Customer ${req.body.customerId} was updated...`});
+            connection.release();
+        });
     });
-
-    db.ShopDB.end();
 });
 
 // Delete a customer
 router.delete('/', (req, res) => {
-    db.startConnection(db.ShopDB, db.emptyDatabase);
+    db.pool.getConnection((err, connection) => {
 
-    let sql = `DELETE FROM customer WHERE customerID = ${req.body.customerId}`;
-    db.ShopDB.query(sql, (err, results) => {
-        if(err) throw err;
-        res.json({msg: `Customer ${req.body.customerId} was deleted`});
+        if(err) {
+            console.log(err.message);
+        }
+
+        let sql = `DELETE FROM customer WHERE customerID = ${req.body.customerId}`;
+        connection.query(sql, (err, results) => {
+            if(err) throw err;
+            res.json({Success: `Customer ${req.body.customerId} was deleted`});
+            connection.release();
+        });
+
     });
-
-    db.ShopDB.end();
 });
 
 // Place an order
 router.post('/order', (req, res) => {
-    db.startConnection(db.ShopDB, db.emptyDatabase);
+    db.pool.getConnection((err, connection) => {
 
-    // Items array
-    let itemList = req.body;
-    console.log(itemList);
+        if(err) {
+            console.log(err.message);
+        }
 
-    async.forEach(itemList, (item) => {
-        console.log(item.itemQuantity);
-    });
+        let orderId = req.body.orderId;
+        let customerId = req.body.customerId;
+        let items = req.body.items;
+        let orderPrice = 0;
 
-    let orderId = 0;
-    let orderItems = '';
-    let orderTotal = 0;
-    let customerId = 0;
-    let ownerId = 0;
+        let order = {
+            orderId: orderId,
+            orderTotal: orderPrice,
+            customerId: customerId
+        };
 
-    async.forEach(itemList, (itemClient) => {
+        // Add order details to orders table
+        let sql = 'INSERT INTO orders SET ?';
+        connection.query(sql, order, (err, result) => {
+            if(err) {
+                console.log(err.message);
+                res.status(400).json({Error: `Order ${orderId} already exists !!!`});
+            };
+            console.log(result);
+            res.json({Success: `Order ${orderId} added to orders table`});
+            connection.release();
+        });
 
-        // Update each item
-        let itemSQL = `UPDATE item SET itemQuantity = (itemQuantity - ${itemClient.itemQuantity}) WHERE itemId = ${itemClient.itemId}`;
-        db.ShopDB.query(itemSQL, (err, result) => {
-            if(err) throw err;
+        async.forEach(items, (item, callback) => {
+
+            let orderItem = {
+                orderId: req.body.orderId,
+                itemName: item.itemName,
+                itemPrice: item.itemPrice,
+                itemQuantity: item.itemQuantity,
+                itemId: item.itemId
+            };
+
+            orderPrice = orderPrice + (item.itemPrice * item.itemQuantity);
+
+
+            // Add items to order_item table
+            let sql = 'INSERT INTO order_item SET ?';
+            connection.query(sql, orderItem, (err, result) => {
+                if(err) {
+                    console.log(err.message);
+                    res.status(400).json({Error: `Order ${orderId} already exists !!!`});
+                };
+                console.log(result);
+
+            });
+
+            // Update the item table
+            let updateQuery = `UPDATE item SET itemQuantity = itemQuantity - ${item.itemQuantity} WHERE itemId = ${item.itemId}`;
+            connection.query(updateQuery, (err, result) => {
+                if(err) {
+                    res.status(400).json({Error: `Item ${item.itemId} does not exist !!!`});
+                }
+                console.log(result);
+
+            });
+
+            callback();
+        }, (err) => {
+            if(err) {
+                console.log(err.message);
+            }
+        });
+
+        // Update the item table
+        let updateQuery = `UPDATE orders SET orderTotal = ${orderPrice} WHERE orderId = ${orderId}`;
+        connection.query(updateQuery, (err, result) => {
+            if(err) {
+                res.status(400).json({Error: `Order ${orderId} does not exist !!!`});
+            }
             console.log(result);
         });
 
-        // Update owner
-        let sql = `UPDATE owner SET ownerProfit = ( ownerProfit + (${itemClient.itemPrice * itemClient.itemQuantity})) WHERE ownerId = ${itemClient.ownerId}`;
-        db.ShopDB.query(sql, (err, result) => {
-            if(err) throw err;
-            console.log(result);
-        });
-
-        // Gets itemName
-        let s = `SELECT itemName FROM item WHERE itemId = ${itemClient.itemId}`;
-        let itemName = db.ShopDB.query(s, (err, result) => {
-            if(err) throw err;
-            console.log(result);
-        });
-
-        orderId = itemClient.orderId;
-        orderItems = orderItems.concat(`${itemClient.itemQuantity} ${itemName}s,`);
-        orderTotal = orderTotal + (itemClient.itemPrice * itemClient.itemQuantity);
-        customerId = itemClient.customerId;
-        ownerId = itemClient.ownerId;
-
     });
-
-    console.log(orderItems);
-
-    let order = new Order(orderId, orderItems, orderTotal, customerId, ownerId);
-
-    // Adds order
-    let sql = 'INSERT INTO orders SET ?';
-    db.ShopDB.query(sql, order, (err, result) => {
-        if(err) throw err;
-        console.log(result);
-        res.json({msg: `Order ${orderId} added to order table`});
-    });
-
-
-    db.ShopDB.end();
 
 });
 

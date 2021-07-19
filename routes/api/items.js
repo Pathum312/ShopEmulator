@@ -5,59 +5,83 @@ const Item = require('../../models/Item');
 
 // Gets all items
 router.get('/', (req, res) => {
-    db.startConnection(db.ShopDB, db.emptyDatabase);
+    db.pool.getConnection((err, connection) => {
 
-    let sql = 'SELECT * FROM item'
-    db.ShopDB.query(sql, (err, result) => {
-        if(err) throw err;
-        res.json(result);
+        if(err) {
+            console.log(err.message);
+        }
+
+        let sql = 'SELECT * FROM item'
+        connection.query(sql, (err, result) => {
+            if(err) throw err;
+            res.json(result);
+            connection.release();
+        });
+
     });
-
-    db.ShopDB.end();
 });
 
 // Adds a item
 router.post('/', (req, res) => {
-    db.startConnection(db.ShopDB, db.emptyDatabase);
+    db.pool.getConnection((err, connection) => {
 
-    let item = new Item(req.body.itemId, req.body.itemName, req.body.itemPrice, req.body.itemQuantity, req.body.ownerId);
+        if(err) {
+            console.log(err.message);
+        }
 
-    let sql = 'INSERT INTO item SET ?';
-    db.ShopDB.query(sql, item, (err, result) => {
-        if(err) throw err;
-        console.log(result);
-        res.json({msg: `Item ${item.getId} added to item table`});
+        let item = new Item(req.body.itemId, req.body.itemName, req.body.itemPrice, req.body.itemQuantity);
+
+        let sql = 'INSERT INTO item SET ?';
+        connection.query(sql, item, (err, result) => {
+            if(err) {
+                console.log(err.message);
+                res.status(400).json({Error: `Item ${item.getId} already exists !!!`});
+            };
+            console.log(result);
+            res.json({Success: `Item ${item.getId} added to item table`});
+            connection.release();
+        });
+
     });
-
-    db.ShopDB.end();
 });
 
 // Update a item's details
 router.put('/', (req, res) => {
-    db.startConnection(db.ShopDB, db.emptyDatabase);
+    db.pool.getConnection((err, connection) => {
+        console.log(req.body);
+        if(err) {
+            console.log(err.message);
+        }
 
-    let item = new Item(req.body.itemId, req.body.itemName, req.body.itemPrice, req.body.itemQuantity, req.body.ownerId);
-    let sql = `UPDATE item SET itemName = '${item.getName}', itemPrice = '${item.getPrice}', itemQuantity = ${item.getQuantity}, ownerId = ${item.getOwnerId} WHERE itemId = ${item.getId}`;
-    db.ShopDB.query(sql, (err, result) => {
-        if(err) throw err;
-        console.log(result);
-        res.json({msg: `Item ${item.getId} was updated`});
+        let sql = "UPDATE item SET " + Object.keys(req.body).map(key => `${key} = ?`).join(", ") +" WHERE itemId = ?";
+        let parameters = [...Object.values(req.body), req.body.itemId];
+        connection.query(sql, parameters, (err, result) => {
+            if(err) {
+                res.status(400).json({Error: `Item ${req.body.itemId} does not exist !!!`});
+            }
+            console.log(result);
+            res.json({Success: `Item ${req.body.itemId} was updated...`});
+            connection.release();
+        });
     });
-
-    db.ShopDB.end();
 });
 
 // Delete a item
 router.delete('/', (req, res) => {
-    db.startConnection(db.ShopDB, db.emptyDatabase);
+    db.pool.getConnection((err, connection) => {
 
-    let sql = `DELETE FROM item WHERE itemId = ${req.body.itemId}`;
-    db.ShopDB.query(sql, (err, results) => {
-        if(err) throw err;
-        res.json({msg: `Item ${req.body.itemId} was deleted`});
+        if(err) {
+            console.log(err.message);
+        }
+
+        let sql = `DELETE FROM item WHERE itemID = ${req.body.itemId}`;
+        connection.query(sql, (err, results) => {
+            if(err) throw err;
+            res.json({Success: `Item ${req.body.itemId} was deleted`});
+            connection.release();
+        });
+
     });
-
-    db.ShopDB.end();
 });
 
 module.exports = router;

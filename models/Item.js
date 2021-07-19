@@ -4,7 +4,6 @@ class Item {
         this.itemName = itemName;
         this.itemPrice = itemPrice;
         this.itemQuantity = itemQuantity;
-        this.ownerId = ownerID;
     }
 
     get getItem() {
@@ -13,7 +12,6 @@ class Item {
             "itemName": this.itemName,
             "itemPrice": this.itemPrice,
             "itemQuantity": this.itemQuantity,
-            "ownerId": this.ownerId
         };
     }
 
@@ -47,14 +45,6 @@ class Item {
 
     set setQuantity(itemQuantity) {
         return this.itemQuantity = itemQuantity;
-    }
-
-    get getOwnerId() {
-        return this.ownerId;
-    }
-
-    set setOwnerId(ownerId) {
-        this.ownerId = ownerId;
     }
 }
 

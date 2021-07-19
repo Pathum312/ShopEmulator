@@ -1,7 +1,11 @@
 const express = require('express');
+const db = require('./database/shopDB');
 
 // Init express
 const app = express();
+
+// Init database
+db.startConnection(db.pool, db.emptyDatabase);
 
 // Body parser
 app.use(express.json());
@@ -9,7 +13,6 @@ app.use(express.json());
 // Api routes
 app.use('/api/customers', require('./routes/api/customers'));
 app.use('/api/items', require('./routes/api/items'));
-app.use('/api/owners', require('./routes/api/owners'));
 
 // Init port
 const PORT = process.env.PORT || 4000;
