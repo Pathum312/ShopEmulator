@@ -2,6 +2,8 @@
 
 ### APIs ###
 
+### /api/customers ###
+
 1. `/createItemTable`: Creates the Item table in the Shop database.
 2. `/createShopOwnerTable`: Created the shop_owner table in the Shop database.
 3. `/addOwner`: Adds a owners data to the Shop_Owner table.
