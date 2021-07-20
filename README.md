@@ -1,6 +1,6 @@
 # ShopEmulator
 
-### APIs (https://localhost:4000) ###
+### APIs (http://localhost:4000) ###
 
 ### /api/customers ###
 
