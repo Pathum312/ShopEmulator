@@ -17,5 +17,25 @@
 3. `PUT /`: Update a items data.
 4. `DELETE /`: Delets a item.
 
+### /order rquest body json  ###
 
-  
+```
+{
+    "orderId": 3337,
+    "customerId": 1111,
+    "items": {
+        "items1": {
+            "itemId": 2221,
+            "itemPrice": 120,
+            "itemName": "Plain Biscuit",
+            "itemQuantity": 1
+        },
+        "item2": {
+            "itemId": 2222,
+            "itemPrice": 300,
+            "itemName": "Chocolate Biscuit",
+            "itemQuantity": 1
+        }
+    }
+}
+```
