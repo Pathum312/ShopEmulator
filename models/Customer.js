@@ -1,16 +1,7 @@
 class Customer {
-    constructor(customerId, customerName, customerEmail) {
-        this.customerId = customerId;
+    constructor(customerName, customerEmail) {
         this.customerName = customerName;
         this.customerEmail = customerEmail;
-    }
-
-    get getId() {
-        return this.customerId;
-    }
-
-    set setId(customerId) {
-        this.customerId = customerId;
     }
 
     get getName() {

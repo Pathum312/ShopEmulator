@@ -1,6 +1,5 @@
 class Item {
-    constructor(itemId, itemName, itemPrice, itemQuantity, ownerID) {
-        this.itemId = itemId;
+    constructor(itemName, itemPrice, itemQuantity, ownerID) {
         this.itemName = itemName;
         this.itemPrice = itemPrice;
         this.itemQuantity = itemQuantity;
@@ -8,19 +7,10 @@ class Item {
 
     get getItem() {
         return {
-            "itemId": this.itemId,
             "itemName": this.itemName,
             "itemPrice": this.itemPrice,
             "itemQuantity": this.itemQuantity,
         };
-    }
-
-    get getId() {
-        return this.itemId;
-    }
-
-    set setId(itemId) {
-        this.itemId = itemId;
     }
 
     get getName() {

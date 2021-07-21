@@ -64,16 +64,16 @@ function startConnection(pool, emptyDatabase) {
 
     pool.getConnection((err, connection) => {
         // Check if Customer table exist
-        checkTable('Customer', 'CREATE TABLE customer(customerId int(4), customerName varchar(255), customerEmail varchar(255), PRIMARY KEY (customerId))', connection);
+        checkTable('Customer', 'CREATE TABLE customer(customerId int(4) AUTO_INCREMENT, customerName varchar(255), customerEmail varchar(255),isDeleted BIT NOT NULL DEFAULT 0 , PRIMARY KEY (customerId))', connection);
 
         // Check if Item table exits
-        checkTable('Item', 'CREATE TABLE item(itemId int(4), itemName varchar(255), itemPrice int(8), itemQuantity int(8), PRIMARY KEY (itemId))', connection)
+        checkTable('Item', 'CREATE TABLE item(itemId int(4) AUTO_INCREMENT, itemName varchar(255), itemPrice int(8), itemQuantity int(8),isDeleted BIT NOT NULL DEFAULT 0 , PRIMARY KEY (itemId))', connection)
 
         // Check if Order table exists
-        checkTable('Orders', 'CREATE TABLE orders(orderId int(4), orderTotal int(8), customerId int(4) NOT NULL, PRIMARY KEY (orderId), FOREIGN KEY (customerId) REFERENCES customer(customerId))', connection);
+        checkTable('Orders', 'CREATE TABLE orders(orderId int(4) AUTO_INCREMENT, orderTotal int(8), customerId int(4) NOT NULL,isDeleted BIT NOT NULL DEFAULT 0 , PRIMARY KEY (orderId), FOREIGN KEY (customerId) REFERENCES customer(customerId))', connection);
 
         // Check if Order_Item table exists
-        checkTable('Order_Item', 'CREATE TABLE order_item(orderId int(4) NOT NULL, itemName varchar(255), itemPrice int(8), itemQuantity int(8), itemId int(4) NOT NULL, FOREIGN KEY (orderId) REFERENCES orders(orderId), FOREIGN KEY (itemId) REFERENCES item(itemId))', connection);
+        checkTable('Order_Item', 'CREATE TABLE order_item(orderId int(4) NOT NULL, itemName varchar(255), itemPrice int(8), itemQuantity int(8), itemId int(4) NOT NULL,isDeleted BIT NOT NULL DEFAULT 0 , FOREIGN KEY (orderId) REFERENCES orders(orderId), FOREIGN KEY (itemId) REFERENCES item(itemId))', connection);
 
         connection.release();
     });
