@@ -13,7 +13,7 @@ router.get('/', (req, res) => {
             connection.release();
         }
 
-        let sql = 'SELECT * FROM customer'
+        let sql = 'SELECT customerId, customerName, customerEmail FROM customer WHERE isDeleted = 0'
         connection.query(sql, (err, result) => {
             if(err) {
                 console.log('Error: ' + err.message);
@@ -53,7 +53,7 @@ router.post('/', (req, res) => {
                     return rollback('Start_transaction', connection, err);
                 }
 
-                connection.query(`SELECT (CASE WHEN EXISTS (SELECT * FROM customer WHERE customerEmail = '${req.body.customerEmail}') THEN 'True' ELSE 'False' END) AS Customer_Exists`, (err, result) => {
+                connection.query(`SELECT (CASE WHEN EXISTS (SELECT * FROM customer WHERE customerEmail = '${req.body.customerEmail}' AND isDeleted = 0) THEN 'True' ELSE 'False' END) AS Customer_Exists`, (err, result) => {
 
                     if(err) {
                         return rollback('Email_check', connection, err);
@@ -116,15 +116,15 @@ router.put('/', (req, res) => {
             connection.release();
         }
 
-        let sql = "UPDATE customer SET " + Object.keys(req.body).map(key => `${key} = ?`).join(", ") +" WHERE customerId = ?";
-        let parameters = [...Object.values(req.body), req.body.customerId];
+        let sql = "UPDATE customer SET " + Object.keys(req.body).map(key => `${key} = ?`).join(", ") + " WHERE customerEmail = ? AND isDeleted = 0";
+        let parameters = [...Object.values(req.body), req.body.customerEmail];
         connection.query(sql, parameters, (err, result) => {
             if(err) {
-                res.status(400).json({Error: `Customer ${req.body.customerId} does not exist !!!`});
+                res.status(400).json({Error: `Customer ${req.body.customerEmail} does not exist !!!`});
                 connection.release();
             } else {
-                console.log(result);
-                res.json({Success: `Customer ${req.body.customerId} was updated...`});
+                console.log(`Customer ${req.body.customerEmail} was updated...`);
+                res.json({Success: `Customer ${req.body.customerEmail} was updated...`});
                 connection.release();
             }
         });
@@ -177,9 +177,6 @@ router.delete('/', (req, res, next) => {
             return res.status(400).json({Error: 'Customer Delete Failed'});
         }
 
-
-
-
     });
 });
 
@@ -230,7 +227,7 @@ router.post('/order', (req, res, next) => {
                         console.log(`Order added to orders table`);
                         res.json({Success: `Order added to orders table`});
 
-                        connection.query(`SELECT orderId FROM orders WHERE customerId = ${customerId}`, (err, result) => {
+                        connection.query(`SELECT orderId FROM orders WHERE orderTotal = 0`, (err, result) => {
 
                             if(err) {
                                 return rollback('Get_OrderId', connection, err);
@@ -243,6 +240,7 @@ router.post('/order', (req, res, next) => {
                                 orderId = order.orderId;
                                 async.forEach(items, (item, callback) => {
 
+
                                     let orderItem = {
                                         orderId: orderId,
                                         itemName: item.itemName,
@@ -252,6 +250,7 @@ router.post('/order', (req, res, next) => {
                                     };
 
                                     orderPrice = orderPrice + (item.itemPrice * item.itemQuantity);
+                                    console.log(orderPrice);
 
                                     // Add items to order_item table
                                     let sql = 'INSERT INTO order_item SET ?';
@@ -283,6 +282,8 @@ router.post('/order', (req, res, next) => {
                                 callback();
 
                             });
+
+                            console.log(orderPrice);
 
                             // Update the order table
                             let updateQuery = `UPDATE orders SET orderTotal = ${orderPrice} WHERE orderId = ${orderId}`;

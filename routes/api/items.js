@@ -13,7 +13,7 @@ router.get('/', (req, res) => {
             connection.release();
         }
 
-        let sql = 'SELECT * FROM item'
+        let sql = 'SELECT itemId, itemName, itemPrice, itemQuantity FROM item WHERE isDeleted = 0'
         connection.query(sql, (err, result) => {
             if(err) {
                 console.log('Error: ' + err.message);
@@ -53,7 +53,7 @@ router.post('/', (req, res) => {
                     return rollback('Start_transaction', connection, err);
                 }
 
-                connection.query(`SELECT (CASE WHEN EXISTS (SELECT * FROM item WHERE itemName = '${req.body.itemName}') THEN 'True' ELSE 'False' END) AS Item_Exists`, (err, result) => {
+                connection.query(`SELECT (CASE WHEN EXISTS (SELECT * FROM item WHERE itemName = '${req.body.itemName}' AND isDeleted = 0) THEN 'True' ELSE 'False' END) AS Item_Exists`, (err, result) => {
 
                     if(err) {
                         return rollback('Email_check', connection, err);
@@ -115,15 +115,16 @@ router.put('/', (req, res) => {
             console.log(err.message);
         }
 
-        let sql = "UPDATE item SET " + Object.keys(req.body).map(key => `${key} = ?`).join(", ") +" WHERE itemId = ?";
+        let sql = "UPDATE item SET " + Object.keys(req.body).map(key => `${key} = ?`).join(", ") +" WHERE itemId = ? AND isDeleted = 0";
         let parameters = [...Object.values(req.body), req.body.itemId];
         connection.query(sql, parameters, (err, result) => {
             if(err) {
                 res.status(400).json({Error: `Item ${req.body.itemId} does not exist !!!`});
+            } else {
+                console.log(`Item ${req.body.itemId} was updated...`);
+                res.json({Success: `Item ${req.body.itemId} was updated...`});
+                connection.release();
             }
-            console.log(result);
-            res.json({Success: `Item ${req.body.itemId} was updated...`});
-            connection.release();
         });
     });
 });
@@ -153,7 +154,7 @@ router.delete('/', (req, res) => {
                     return rollback('Start_transaction', connection, err);
                 }
 
-                let sql = `Update item SET isDeleted = 1 WHERE itemId = ${req.body.itemId}`;
+                let sql = `Update customer SET isDeleted = 1 WHERE itemId = ${req.body.itemId}`;
                 connection.query(sql, (err, results) => {
                     if(err) {
                         rollback('Delete_Item', connection, err);
