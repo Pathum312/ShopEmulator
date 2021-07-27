@@ -1,24 +1,51 @@
-class Customer {
-    constructor(customerName, customerEmail) {
-        this.customerName = customerName;
-        this.customerEmail = customerEmail;
+'use strict';
+const {
+  Model
+} = require('sequelize');
+module.exports = (sequelize, DataTypes) => {
+  class Customer extends Model {
+    /**
+     * Helper method for defining associations.
+     * This method is not a part of Sequelize lifecycle.
+     * The `models/index` file will call this method automatically.
+     */
+    static associate({ Orders }) {
+      // this.hasMany(Orders, { foreignKey: 'customerId'})
     }
 
-    get getName() {
-        return this.customerName;
+    toJSON() {
+      return {...this.get(), id: undefined }
     }
 
-    set setName(customerName) {
-        this.customerName = customerName;
-    }
-
-    get getEmail() {
-        return this.customerEmail;
-    }
-
-    set setEmail(customerEmail) {
-        this.customerEmail = customerEmail;
-    }
-}
-
-module.exports = Customer;
+  };
+  Customer.init({
+    uuid: {
+      type: DataTypes.UUID,
+      allowNull: false,
+      defaultValue: DataTypes.UUIDV4
+    },
+    customerName: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      validate: {
+        notNull: {Error: "customerName cannot be null"},
+        notEmpty: {Error: "customerEmail cannot be empty"}
+      }
+    },
+    customerEmail: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      validate: {
+        notNull: {Error: "customerName cannot be null"},
+        notEmpty: {Error: "customerEmail cannot be empty"},
+        isEmail: {Error: "Please enter a valid email"}
+      }
+    },
+  }, {
+    sequelize,
+    paranoid: true,
+    tableName: 'customers',
+    modelName: 'Customer',
+  });
+  return Customer;
+};

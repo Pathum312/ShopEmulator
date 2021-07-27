@@ -1,23 +1,24 @@
 const express = require('express');
-const db = require('./database/shopDB');
+const { sequelize } = require('./models');
 
-// Init express
+// Express init
 const app = express();
 
-// Init database
-db.startConnection(db.pool, db.emptyDatabase);
-
-// Body parser
+// Json body parser middleware
 app.use(express.json());
 
-// Api routes
+// Api Routes
 app.use('/api/customers', require('./routes/api/customers'));
 app.use('/api/items', require('./routes/api/items'));
 
-// Init port
-const PORT = process.env.PORT || 4000;
+// Listing on port 5000
+app.listen({ port: 5000 }, async () => {
+    console.log('Server up on http://localhost:5000');
+    await sequelize.authenticate();
+    console.log('Database connected');
+    await sequelize.sync({ force: true });
+    console.log('Tables created')
+})
 
-// Listen on PORT
-app.listen(PORT, () => console.log(`Server started on port: ${PORT}`));
 
 
